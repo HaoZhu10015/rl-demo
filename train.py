@@ -3,10 +3,10 @@ import os
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import gymnasium as gym
 
 from config import *
 from agent import *
-from environment import *
 
 np.random.seed(CONFIG.RANDOM_SEED)
 torch.manual_seed(CONFIG.RANDOM_SEED)
@@ -18,7 +18,7 @@ if not os.path.exists(output_dir):
 
 
 def train_dqn(env_name, hidden_dim, hidden_layer_n, lr, updates, fig_update_freq):
-    env = make_env(env_name)
+    env = gym.make(env_name)
 
     agent = DQN(input_dim=env.observation_space.shape[0],
                 hidden_dim=hidden_dim,
@@ -39,7 +39,7 @@ def train_dqn(env_name, hidden_dim, hidden_layer_n, lr, updates, fig_update_freq
         while True:
             action = agent.act(state)
             next_state, reward, terminated, truncated, *_ = env.step(action)
-            done = terminated or truncated
+            done = terminated
 
             trial_reward += reward
             agent.buffer.add_experience(
@@ -65,6 +65,8 @@ def train_dqn(env_name, hidden_dim, hidden_layer_n, lr, updates, fig_update_freq
                                          'valid'), c='r')
                     axs.set_xlabel('#Trials')
                     axs.set_ylabel('Trial Reward')
+                    if np.max(reward_rec) - np.min(reward_rec) > 1e3:
+                        axs.set_yscale('symlog')
                     title = '{}-{}'.format('DQN', env_name)
                     axs.set_title(title)
                     plt.tight_layout()
@@ -76,7 +78,7 @@ def train_dqn(env_name, hidden_dim, hidden_layer_n, lr, updates, fig_update_freq
 
 
 def train_ppo(env_name, hidden_dim, hidden_layer_n, lr_actor, lr_critic, updates, fig_update_freq):
-    env = make_env(env_name)
+    env = gym.make(env_name)
 
     agent = PPO(input_dim=env.observation_space.shape[0],
                 hidden_dim=hidden_dim,
@@ -98,7 +100,7 @@ def train_ppo(env_name, hidden_dim, hidden_layer_n, lr_actor, lr_critic, updates
         while True:
             action = agent.act(state)
             next_state, reward, terminated, truncated, *_ = env.step(action)
-            done = terminated or truncated
+            done = terminated
 
             agent.buffer.rewards.append(reward)
             agent.buffer.dones.append(done)
@@ -118,6 +120,8 @@ def train_ppo(env_name, hidden_dim, hidden_layer_n, lr_actor, lr_critic, updates
                                          'valid'), c='r')
                     axs.set_xlabel('#Trials')
                     axs.set_ylabel('Trial Reward')
+                    if np.max(reward_rec) - np.min(reward_rec) > 1e3:
+                        axs.set_yscale('symlog')
                     title = '{}-{}'.format('PPO', env_name)
                     axs.set_title(title)
                     plt.tight_layout()
