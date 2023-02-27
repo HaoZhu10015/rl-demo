@@ -196,13 +196,13 @@ class PPO:
         self.c_entropy = c_entropy
         self.k_epochs = k_epochs
 
-        self.fn = ActorCritic(input_dim, hidden_dim, hidden_layer_n, action_n)
+        self.fn = ActorCritic(input_dim, hidden_dim, hidden_layer_n, action_n).to(self.device)
         self.fn_optim = optim.Adam([
                         {'params': self.fn.actor.parameters(), 'lr': lr_actor},
                         {'params': self.fn.critic.parameters(), 'lr': lr_critic}
                     ])
 
-        self.old_fn = ActorCritic(input_dim, hidden_dim, hidden_layer_n, action_n)
+        self.old_fn = ActorCritic(input_dim, hidden_dim, hidden_layer_n, action_n).to(self.device)
         self.old_fn.load_state_dict(self.fn.state_dict())
 
         self.mse_loss = nn.MSELoss()
